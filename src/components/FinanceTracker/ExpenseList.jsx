@@ -18,8 +18,10 @@ export default function ExpenseList() {
   const [expenses, setExpenses] = useState([]);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', amount: '' });
+  const CATEGORY_OPTIONS = ['General', 'Food', 'Bills', 'Transport', 'Shopping', 'Health', 'Entertainment', 'Other'];
+  const [form, setForm] = useState({ name: '', amount: '', recurring: false, category: 'General' });
   const [formError, setFormError] = useState({ name: '', amount: '' });
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [showAlert, setShowAlert] = useState('');
   const [search, setSearch] = useState('');
   const [orderBy, setOrderBy] = useState('name');
@@ -32,8 +34,8 @@ export default function ExpenseList() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setExpenses(JSON.parse(stored));
     else setExpenses([
-      { id: 1, name: 'Groceries', amount: 50 },
-      { id: 2, name: 'Internet', amount: 30 },
+      { id: 1, name: 'Groceries', amount: 50, category: 'Food' },
+      { id: 2, name: 'Internet', amount: 30, category: 'Bills' },
     ]);
   }, []);
 
@@ -44,12 +46,12 @@ export default function ExpenseList() {
 
   const handleOpen = () => {
     setEditId(null);
-    setForm({ name: '', amount: '' });
+    setForm({ name: '', amount: '', recurring: false, category: 'General' });
     setOpen(true);
   };
   const handleClose = () => {
     setOpen(false);
-    setForm({ name: '', amount: '' });
+    setForm({ name: '', amount: '', recurring: false, category: 'General' });
     setEditId(null);
   };
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -61,14 +63,14 @@ export default function ExpenseList() {
     if (error.name || error.amount) return;
     setExpenses([
       ...expenses,
-      { id: Date.now(), name: form.name, amount: parseFloat(form.amount) },
+      { id: Date.now(), name: form.name, amount: parseFloat(form.amount), recurring: !!form.recurring, category: form.category || 'General' },
     ]);
     setShowAlert('Expense added successfully!');
     handleClose();
   };
   const handleEdit = (row) => {
     setEditId(row.id);
-    setForm({ name: row.name, amount: row.amount });
+    setForm({ name: row.name, amount: row.amount, recurring: !!row.recurring, category: row.category || 'General' });
     setOpen(true);
   };
   const handleUpdate = () => {
@@ -77,7 +79,7 @@ export default function ExpenseList() {
     if (!validateAmount(form.amount)) error.amount = 'Amount must be greater than 0.';
     setFormError(error);
     if (error.name || error.amount) return;
-    setExpenses(expenses.map(e => e.id === editId ? { ...e, ...form, amount: parseFloat(form.amount) } : e));
+    setExpenses(expenses.map(e => e.id === editId ? { ...e, ...form, amount: parseFloat(form.amount), recurring: !!form.recurring, category: form.category || 'General' } : e));
     setShowAlert('Expense updated successfully!');
     handleClose();
   };
@@ -98,10 +100,11 @@ export default function ExpenseList() {
   };
 
   // Search/filter
-  const filtered = expenses.filter(row =>
-    row.name.toLowerCase().includes(search.toLowerCase()) ||
-    row.amount.toString().includes(search)
-  );
+  const filtered = expenses.filter(row => {
+    const matchesSearch = row.name.toLowerCase().includes(search.toLowerCase()) || row.amount.toString().includes(search);
+    const matchesCategory = categoryFilter === 'All' || (row.category || 'General') === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   // Sorting
   const handleRequestSort = (property) => {
@@ -148,6 +151,21 @@ export default function ExpenseList() {
           }}
           inputProps={{ 'aria-label': 'search expenses' }}
         />
+        <TextField
+          select
+          size="small"
+          label="Category"
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          sx={{ mr: 2, width: 140 }}
+          SelectProps={{ native: true }}
+          inputProps={{ 'aria-label': 'filter by category' }}
+        >
+          <option value="All">All</option>
+          {CATEGORY_OPTIONS.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </TextField>
         <Button variant="contained" color="primary" onClick={handleOpen} sx={{ mr: 2 }} aria-label="add expense">
           Add Expense
         </Button>
@@ -179,6 +197,7 @@ export default function ExpenseList() {
                   Amount ($)
                 </TableSortLabel>
               </TableCell>
+              <TableCell>Category</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -187,6 +206,7 @@ export default function ExpenseList() {
               <TableRow key={exp.id} tabIndex={0} aria-label={`expense ${exp.name} amount ${exp.amount}`}> 
                 <TableCell>{exp.name}</TableCell>
                 <TableCell>{exp.amount.toFixed(2)}</TableCell>
+                <TableCell>{exp.category || 'General'}</TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleEdit(exp)} aria-label={`edit ${exp.name}`}>
                     <EditIcon />
@@ -199,7 +219,7 @@ export default function ExpenseList() {
             ))}
             {paginated.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} align="center">
+                <TableCell colSpan={4} align="center">
                   No expenses found.
                 </TableCell>
               </TableRow>
@@ -209,7 +229,7 @@ export default function ExpenseList() {
             <TableRow>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
-                colSpan={3}
+                colSpan={4}
                 count={sorted.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
@@ -231,31 +251,57 @@ export default function ExpenseList() {
         <DialogTitle id="expense-dialog-title">{editId ? 'Edit Expense' : 'Add Expense'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              fullWidth
-              error={!!formError.name}
-              helperText={formError.name}
-              autoFocus
-              inputProps={{ 'aria-label': 'expense name' }}
-            />
-            <TextField
-              label="Amount"
-              name="amount"
-              type="number"
-              value={form.amount}
-              onChange={handleChange}
-              fullWidth
-              error={!!formError.amount}
-              helperText={formError.amount}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-              }}
-              inputProps={{ 'aria-label': 'expense amount', min: 0, step: 0.01 }}
-            />
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <TextField
+                label="Name"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                fullWidth
+                error={!!formError.name}
+                helperText={formError.name}
+                autoFocus
+                inputProps={{ 'aria-label': 'expense name' }}
+              />
+              <TextField
+                label="Amount"
+                name="amount"
+                type="number"
+                value={form.amount}
+                onChange={handleChange}
+                fullWidth
+                error={!!formError.amount}
+                helperText={formError.amount}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                inputProps={{ 'aria-label': 'expense amount', min: 0, step: 0.01 }}
+              />
+              <TextField
+                select
+                label="Category"
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                sx={{ minWidth: 120 }}
+                SelectProps={{ native: true }}
+                inputProps={{ 'aria-label': 'expense category' }}
+              >
+                {CATEGORY_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </TextField>
+              <label style={{ display: 'flex', alignItems: 'center', marginLeft: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!form.recurring}
+                  onChange={e => setForm(f => ({ ...f, recurring: e.target.checked }))}
+                  style={{ marginRight: 4 }}
+                  aria-label="recurring expense"
+                />
+                Recurring
+              </label>
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
