@@ -1,12 +1,52 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# FinVault
 
-Currently, two official plugins are available:
+> A modern, full-featured personal finance, expense sharing, and password management app built with React, Vite, Material-UI, and Chakra UI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Finance Tracker**: Track expenses, categories, recurring expenses, and export/import data.
+- **Expense Sharing**: Manage groups, add members, split expenses, settle up, and share summaries via WhatsApp.
+- **Password Manager**: Store, generate, and rate passwords; import/export (encrypted); search and categorize.
+- **Modern UI**: Responsive, accessible, and beautiful design using Material-UI and Chakra UI.
+- **Charts & Analytics**: Visualize your spending with charts.
+- **Local Storage**: All data is stored locally in your browser for privacy.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+- React 18
+- Vite
+- Material-UI (MUI)
+- Chakra UI (legacy in Expense Sharing)
+- XLSX, file-saver (export/import)
+- Recharts (charts)
+
+## Getting Started
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+2. **Run the app in development:**
+   ```bash
+   npm run dev
+   ```
+3. **Build for production:**
+   ```bash
+   npm run build
+   ```
+4. **Lint the code:**
+   ```bash
+   npm run lint
+   ```
+
+## Folder Structure
+
+- `src/components/FinanceTracker/` — Expense tracking UI and logic
+- `src/components/ExpenseSharing/` — Group expense sharing
+- `src/components/PasswordManager/` — Password management
+- `src/pages/` — Main app pages
+
+## License
+
+This project is for personal and educational use.
