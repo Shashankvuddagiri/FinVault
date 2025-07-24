@@ -47,6 +47,4 @@
 - `src/components/PasswordManager/` — Password management
 - `src/pages/` — Main app pages
 
-## License
 
-This project is for personal and educational use.
